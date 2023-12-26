@@ -1,5 +1,4 @@
-// Breaking news from the Guardian
-// Cached or fresh
+// Breaking news
 package breaking
 
 import (

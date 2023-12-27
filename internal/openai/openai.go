@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 const (
@@ -33,7 +36,21 @@ var pricing = map[string]float64{
 	"gpt-4-1106-preview": 0.03,
 }
 
-var ApiKey string = ""
+type OpenAIApiStats struct {
+	gorm.Model
+	ApiKey       string `gorm:"-"`
+	TokenCounter int
+	CostCounter  float64
+}
+
+func (s *OpenAIApiStats) LogCostAndTokens(tokens int, cost float64) {
+	s.TokenCounter += tokens
+	s.CostCounter += cost
+	db.Save(s)
+}
+
+var Stats OpenAIApiStats
+var db *gorm.DB
 
 type Message struct {
 	Name    string `json:"name,omitempty"`
@@ -76,6 +93,19 @@ func (c Completion) Cost() (float64, error) {
 	return price * float64(c.Usage.TotalTokens) / 1000, nil
 }
 
+func init() {
+	var err error
+	db, err = gorm.Open(sqlite.Open("apistats.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	db.AutoMigrate(&OpenAIApiStats{})
+	result := db.FirstOrCreate(&Stats)
+	if result.Error != nil {
+		log.Println(result.Error)
+	}
+}
+
 func chatCompletion(request Request) (Completion, error) {
 	completion := Completion{}
 	reqBody, err := json.Marshal(request)
@@ -89,7 +119,7 @@ func chatCompletion(request Request) (Completion, error) {
 		return completion, err
 	}
 
-	r.Header.Set("Authorization", "Bearer "+ApiKey)
+	r.Header.Set("Authorization", "Bearer "+Stats.ApiKey)
 	r.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(r)
@@ -108,8 +138,10 @@ func chatCompletion(request Request) (Completion, error) {
 	cost, err := completion.Cost()
 	if err != nil {
 		log.Printf("Completion generated, %v tokens (%v)", completion.Usage.TotalTokens, err)
+		Stats.LogCostAndTokens(completion.Usage.TotalTokens, 0.0)
 	} else {
 		log.Printf("Completion generated at cost of $%.4f", cost)
+		Stats.LogCostAndTokens(completion.Usage.TotalTokens, cost)
 	}
 	return completion, nil
 }

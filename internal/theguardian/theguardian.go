@@ -9,6 +9,10 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"time"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 const (
@@ -23,7 +27,32 @@ const (
 	ShowFieldsHeadline = "headline"
 )
 
-var ApiKey string
+type GuardianApiStats struct {
+	gorm.Model
+	ApiKey            string `gorm:"-"`
+	LastCalled        time.Time
+	PauseBetweenCalls time.Duration
+	RequestCounter    int
+}
+
+func (s *GuardianApiStats) LogCall() {
+	s.LastCalled = time.Now()
+	s.RequestCounter++
+	result := db.Save(s)
+	if result.Error != nil {
+		log.Println(result.Error)
+	}
+}
+
+func (s *GuardianApiStats) PauseTimeElapsed() bool {
+	return time.Now().After(s.LastCalled.Add(s.PauseBetweenCalls))
+}
+
+var Stats = GuardianApiStats{
+	PauseBetweenCalls: 15 * time.Minute,
+}
+
+var db *gorm.DB
 
 type Response struct {
 	Content Content `json:"response"`
@@ -78,6 +107,19 @@ type Query struct {
 	PageSize    int    `param:"page-size"`
 }
 
+func init() {
+	var err error
+	db, err = gorm.Open(sqlite.Open("apistats.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to open DB: %v", err)
+	}
+	db.AutoMigrate(&GuardianApiStats{})
+	result := db.FirstOrCreate(&Stats)
+	if result.Error != nil {
+		log.Println(result.Error)
+	}
+}
+
 func (q Query) ToUrlParams() url.Values {
 	params := url.Values{}
 	// get a Value from Reflect to iterate over the fields
@@ -104,19 +146,21 @@ func (q Query) ToUrlParams() url.Values {
 				continue
 			}
 			params.Add(fieldTag, valueStr)
-		} else {
-			//log.Printf("Field %s has no tag or is zero", fieldType.Name)
 		}
 	}
-	params.Add("api-key", ApiKey)
+	params.Add("api-key", Stats.ApiKey)
 	//log.Printf("params: %v", params)
 	return params
 }
 
 func GetContent(query Query) (Content, error) {
+	if !Stats.PauseTimeElapsed() {
+		return Content{}, fmt.Errorf("not enough time between updates - last update: %v", Stats.LastCalled)
+	}
 	params := query.ToUrlParams()
 	url := contentUrl + "?" + params.Encode()
 	log.Printf("Retrieving content from %s\n", url)
+	Stats.LogCall()
 	resp, err := http.Get(url)
 	if err != nil {
 		return Content{}, err
@@ -155,6 +199,7 @@ func GetSingleItem(query Query) (Result, error) {
 	params.Del("id") // id needs to be in the URL instead
 	url := singleItemUrl + query.Id + "?" + params.Encode()
 	//log.Println("Getting url: ",url)
+	Stats.LogCall()
 	resp, err := http.Get(url)
 	if err != nil {
 		return Result{}, err

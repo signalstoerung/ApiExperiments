@@ -11,11 +11,11 @@ import (
 )
 
 func retrieve() {
-	theguardian.ApiKey = os.Getenv("GUARDIAN_API")
-	if theguardian.ApiKey == "" {
+	theguardian.Stats.ApiKey = os.Getenv("GUARDIAN_API")
+	if theguardian.Stats.ApiKey == "" {
 		log.Panic("Guardian API key missing")
 	}
-	if openai.ApiKey = os.Getenv("OPENAI_API"); openai.ApiKey == "" {
+	if openai.Stats.ApiKey = os.Getenv("OPENAI_API"); openai.Stats.ApiKey == "" {
 		log.Panic("OpenAI API key missing")
 	}
 

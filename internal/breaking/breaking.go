@@ -91,3 +91,12 @@ func AllStories() ([]DevelopingStory, error) {
   }
   return stories, nil
 }
+
+func StoriesSince(startTime time.Time) ([]DevelopingStory, error) {
+  var stories []DevelopingStory
+  result := db.Where("last_updated > ?",startTime).Preload("Updates", "created_at > ?", startTime).Find(&stories)
+  if result.Error != nil {
+    return nil, result.Error
+  }
+  return stories, nil
+}

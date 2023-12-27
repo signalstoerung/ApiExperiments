@@ -15,10 +15,12 @@ import (
 func retrieve() {
 	apiKey := os.Getenv("GUARDIAN_API")
 	if apiKey == "" {
-		log.Panic("No API key provided")
+		log.Panic("Guardian API key missing")
 	}
 	theguardian.ApiKey = apiKey
-	openai.ApiKey = os.Getenv("OPENAI_API")
+	if openai.ApiKey = os.Getenv("OPENAI_API"); openai.ApiKey == "" {
+    log.Panic("OpenAI API key missing")
+  }
 
 	//log.Printf("Found API key: %s\n", apiKey)
 
@@ -41,6 +43,10 @@ func retrieve() {
 			log.Printf("Couldn't parse date: %s", err)
 			continue
 		}
+    if result.SectionId == "sport" || result.SectionId == "australia-news" {
+      log.Printf("Skipping: %v (%v)", result.SectionId, result.WebTitle)
+      continue
+    }
 		if published.After(oneHourAgo) {
       story, err := breaking.StoryExists(result.Id)
       if err != nil {
@@ -77,18 +83,13 @@ func retrieve() {
         log.Println(err)
       }
 			fmt.Printf("Latest update: %v\n", headline)
-      log.Printf("%+v",story)
+      //log.Printf("%+v",story)
 		}
 
 	}
 }
 
-func dumpDB() {
-  stories, err := breaking.AllStories()
-  if err != nil {
-    log.Println(err)
-    os.Exit(-1)
-  }
+func printStories(stories []breaking.DevelopingStory) {
   for _, story := range stories {
     fmt.Printf("Slug: %s ", story.Slug)
     fmt.Printf("(last updated %s\n", story.LastUpdated.Format("15:04"))
@@ -104,12 +105,30 @@ func dumpDB() {
   }
 }
 
+
+func dumpDB(since time.Time) {
+  var stories []breaking.DevelopingStory
+  var err error
+  if since.IsZero() {
+    stories, err = breaking.AllStories()
+  } else {
+  stories, err = breaking.StoriesSince(time.Now().Add(-1 * time.Hour))
+    }
+  if err != nil {
+    log.Println(err)
+    os.Exit(-1)
+  }
+  printStories(stories)
+}
+
+
 func main() {
   welcome := `
 BREAKING NEWS
 -------------
 1. All stories in DB
-2. Refresh
+2. Last Hour
+3. Refresh
 `
   fmt.Println(welcome)
   fmt.Printf("Make a choice: ")
@@ -119,10 +138,11 @@ BREAKING NEWS
     log.Println(err)
     os.Exit(-1)
   }
-  log.Printf("Choice: %d", choice)
+  //log.Printf("Choice: %d", choice)
   switch choice {
-    case 1: dumpDB()
-    case 2: retrieve()
+    case 1: dumpDB(time.Time{})
+    case 2: dumpDB(time.Now().Add(-1 * time.Hour))
+    case 3: retrieve()
     default: fmt.Printf("Invalid choice: %d", choice)
   }
 }

@@ -3,146 +3,84 @@ package main
 import (
 	"fmt"
 	"log"
+	"main/internal/breaking"
 	"main/internal/openai"
 	"main/internal/theguardian"
-  "main/internal/breaking"
 	"os"
 	"time"
 )
 
-//var apiKey string = ""
-
 func retrieve() {
-	apiKey := os.Getenv("GUARDIAN_API")
-	if apiKey == "" {
+	theguardian.ApiKey = os.Getenv("GUARDIAN_API")
+	if theguardian.ApiKey == "" {
 		log.Panic("Guardian API key missing")
 	}
-	theguardian.ApiKey = apiKey
 	if openai.ApiKey = os.Getenv("OPENAI_API"); openai.ApiKey == "" {
-    log.Panic("OpenAI API key missing")
-  }
-
-	//log.Printf("Found API key: %s\n", apiKey)
-
-	query := theguardian.Query{
-		OrderBy: theguardian.OrderByNewest,
+		log.Panic("OpenAI API key missing")
 	}
-	content, err := theguardian.GetContent(query)
+
+	err := theguardian.GetLiveblogUpdates(time.Now().Add(-1 * time.Hour))
 	if err != nil {
-		log.Printf("Error retrieving content: %s", err)
-		return
-	}
-	//fmt.Printf("Found %d results\n", content.Total)
-	oneHourAgo := time.Now().Add(-1 * time.Hour)
-	for _, result := range content.Results {
-		if result.Type != "liveblog" {
-			continue
-		}
-		published, err := time.Parse(time.RFC3339, result.WebPublicationDate)
-		if err != nil {
-			log.Printf("Couldn't parse date: %s", err)
-			continue
-		}
-    if result.SectionId == "sport" || result.SectionId == "australia-news" {
-      log.Printf("Skipping: %v (%v)", result.SectionId, result.WebTitle)
-      continue
-    }
-		if published.After(oneHourAgo) {
-      story, err := breaking.StoryExists(result.Id)
-      if err != nil {
-        log.Printf("Story does not exist (%v), creating new one", err)
-        story, err = breaking.CreateStory(result.Id)
-        if err != nil {
-          log.Printf("Aborting story update: %v", err)
-          continue
-        }
-      }
-			fmt.Printf("Liveblog updated at %v - %v\n", published.Format("15:04"), result.WebTitle)
-			item, err := theguardian.GetSingleItem(theguardian.Query{
-				Id:         result.Id,
-				ShowFields: theguardian.ShowFieldsBody,
-			})
-			if err != nil {
-				log.Printf("Could not retrieve item %v: %v", result.Id, err)
-				continue
-			}
-			//log.Printf("parsing body: %v", item.Fields.Body)
-			update, err := theguardian.ParseLiveBlogBody(item.Fields.Body)
-			if err != nil {
-				log.Printf("Could not parse body: %v", err)
-				continue
-			}
-      update += "NOTE--this update is part of a developing story, " + result.WebTitle
-			headline, err := openai.HeadlineForText(update)
-			if err != nil {
-				log.Printf("Unable to generate headline: %v", err)
-				return
-			}
-      err = story.AddUpdate(headline, update, item.WebUrl)
-      if err != nil {
-        log.Println(err)
-      }
-			fmt.Printf("Latest update: %v\n", headline)
-      //log.Printf("%+v",story)
-		}
-
+		log.Println(err)
 	}
 }
 
 func printStories(stories []breaking.DevelopingStory) {
-  for _, story := range stories {
-    fmt.Printf("Slug: %s ", story.Slug)
-    fmt.Printf("(last updated %s)\n", story.LastUpdated.Format("15:04"))
-    fmt.Println("-----------------------------------------------------")
-    for _, update := range story.Updates {
-      fmt.Println(update.Headline)
-      //fmt.Println(update.Body)
-      fmt.Println(update.Url)
-      fmt.Printf("Created: %s\n", update.CreatedAt.Format("15:04"))
-      fmt.Println("+++")
-      }
-    fmt.Println("* * * * *")
-  }
+	for _, story := range stories {
+		fmt.Printf("Slug: %s ", story.Slug)
+		fmt.Printf("(last updated %s)\n", story.LastUpdated.Format("15:04"))
+		fmt.Println("-----------------------------------------------------")
+		for _, update := range story.Updates {
+			fmt.Println(update.Headline)
+			fmt.Println(update.Body)
+			fmt.Println(update.Url)
+			fmt.Printf("Created: %s\n", update.CreatedAt.Format("15:04"))
+			fmt.Println("+++")
+		}
+		fmt.Println("* * * * *")
+	}
 }
-
 
 func dumpDB(since time.Time) {
-  var stories []breaking.DevelopingStory
-  var err error
-  if since.IsZero() {
-    stories, err = breaking.AllStories()
-  } else {
-  stories, err = breaking.StoriesSince(time.Now().Add(-1 * time.Hour))
-    }
-  if err != nil {
-    log.Println(err)
-    os.Exit(-1)
-  }
-  printStories(stories)
+	var stories []breaking.DevelopingStory
+	var err error
+	if since.IsZero() {
+		stories, err = breaking.AllStories()
+	} else {
+		stories, err = breaking.StoriesSince(time.Now().Add(-1 * time.Hour))
+	}
+	if err != nil {
+		log.Println(err)
+		os.Exit(-1)
+	}
+	printStories(stories)
 }
 
-
 func main() {
-  welcome := `
+	welcome := `
 BREAKING NEWS
 -------------
 1. All stories in DB
 2. Last Hour
 3. Refresh
 `
-  fmt.Println(welcome)
-  fmt.Printf("Make a choice: ")
-  var choice int
-  _, err := fmt.Scanf("%d", &choice)
-  if err != nil {
-    log.Println(err)
-    os.Exit(-1)
-  }
-  //log.Printf("Choice: %d", choice)
-  switch choice {
-    case 1: dumpDB(time.Time{})
-    case 2: dumpDB(time.Now().Add(-1 * time.Hour))
-    case 3: retrieve()
-    default: fmt.Printf("Invalid choice: %d", choice)
-  }
+	fmt.Println(welcome)
+	fmt.Printf("Make a choice: ")
+	var choice int
+	_, err := fmt.Scanf("%d", &choice)
+	if err != nil {
+		log.Println(err)
+		os.Exit(-1)
+	}
+	//log.Printf("Choice: %d", choice)
+	switch choice {
+	case 1:
+		dumpDB(time.Time{})
+	case 2:
+		dumpDB(time.Now().Add(-1 * time.Hour))
+	case 3:
+		retrieve()
+	default:
+		fmt.Printf("Invalid choice: %d", choice)
+	}
 }

@@ -3,6 +3,7 @@ package theguardian
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -24,21 +25,6 @@ const (
 
 var ApiKey string
 
-/*
-status	The status of the response. It refers to the state of the API. Successful calls will receive an "ok" even if your query did not return any results	String
-total	The number of results available for your search overall	Integer
-pageSize	The number of items returned in this call	Integer
-currentPage	The number of the page you are browsing	Integer
-pages	The total amount of pages that are in this call	Integer
-orderBy	The sort order used	String
-id	The path to content	String
-sectionId	The id of the section	String
-sectionName	The name of the section	String
-webPublicationDate	The combined date and time of publication	Datetime
-webUrl	The URL of the html content	String
-apiUrl	The URL of the raw content	String
-*/
-
 type Response struct {
 	Content Content `json:"response"`
 }
@@ -54,12 +40,12 @@ type Content struct {
 }
 
 type SingleItemResponse struct {
-  Content SingleItemContent `json:"response"`
-  }
+	Content SingleItemContent `json:"response"`
+}
 
 type SingleItemContent struct {
-	Status  string `json:"status"`
-	Total   int    `json:"total"`
+	Status string `json:"status"`
+	Total  int    `json:"total"`
 	Result Result `json:"content"`
 }
 
@@ -88,6 +74,8 @@ type Query struct {
 	Tags        string `param:"tags"`
 	OrderBy     string `param:"order-by"`
 	ShowFields  string `param:"show-fields"`
+	Page        int    `param:"page"`
+	PageSize    int    `param:"page-size"`
 }
 
 func (q Query) ToUrlParams() url.Values {
@@ -100,7 +88,22 @@ func (q Query) ToUrlParams() url.Values {
 		fieldType := v.Type().Field(i)         // field as a reflect.StructField
 		fieldTag := fieldType.Tag.Get("param") // field tag
 		if fieldTag != "" && !field.IsZero() {
-			params.Add(fieldTag, field.String())
+			var valueStr string
+			switch field.Kind() {
+			case reflect.String:
+				valueStr = field.String()
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				valueStr = fmt.Sprintf("%d", field.Int())
+			case reflect.Float32, reflect.Float64:
+				valueStr = fmt.Sprintf("%f", field.Float())
+			case reflect.Bool:
+				valueStr = fmt.Sprintf("%t", field.Bool())
+			// Add cases for other types as needed
+			default:
+				log.Printf("ToUrlParams: %v not supported", field.Kind())
+				continue
+			}
+			params.Add(fieldTag, valueStr)
 		} else {
 			//log.Printf("Field %s has no tag or is zero", fieldType.Name)
 		}
@@ -113,7 +116,7 @@ func (q Query) ToUrlParams() url.Values {
 func GetContent(query Query) (Content, error) {
 	params := query.ToUrlParams()
 	url := contentUrl + "?" + params.Encode()
-	//log.Printf("Retrieving content from %s\n", url)
+	log.Printf("Retrieving content from %s\n", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return Content{}, err
@@ -149,9 +152,9 @@ func GetContent(query Query) (Content, error) {
 
 func GetSingleItem(query Query) (Result, error) {
 	params := query.ToUrlParams()
-  params.Del("id") // id needs to be in the URL instead
+	params.Del("id") // id needs to be in the URL instead
 	url := singleItemUrl + query.Id + "?" + params.Encode()
-  //log.Println("Getting url: ",url)
+	//log.Println("Getting url: ",url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return Result{}, err

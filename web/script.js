@@ -20,6 +20,7 @@ function loadNews(){
         processUpdates(json);
     }).catch( (e) => {
         console.error("Something went wrong: ",e);
+        
     })
 }
 

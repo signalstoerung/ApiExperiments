@@ -41,13 +41,23 @@ header {
 
 section {
     display: flex;
+    min-height: 40vh;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-left:45px;
+    padding-right:45px;
 }
 
 article {
-    width: 30%;
-    /* min-height: 50vh; */
+    width: 300px;
     padding: 1em;
     border: 1px solid;
+    display:flex;
+    flex-direction: column;
+}
+
+article h2 {
+    flex-grow: 2;
 }
 
 .icon {
@@ -72,4 +82,12 @@ aside a:visited {
 
 aside a:hover {
     text-decoration: underline;
+}
+
+a {
+    color: var(--primary-color);
+}
+
+a:visited {
+    color: var(--primary-color);
 }

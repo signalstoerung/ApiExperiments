@@ -37,7 +37,7 @@ func GetLiveblogUpdates(since time.Time) error {
 		}
 
 		// skip sports and austalia news
-		if result.SectionId == "sport" || result.SectionId == "australia-news" {
+		if result.SectionId == "sport" || result.SectionId == "football" || result.SectionId == "australia-news" {
 			log.Printf("Skipping: %v (%v)", result.SectionId, result.WebTitle)
 			continue
 		}

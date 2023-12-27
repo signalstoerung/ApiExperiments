@@ -81,9 +81,15 @@ func GetLiveblogUpdates(since time.Time) error {
 			log.Printf("Could not parse body: %v", err)
 			continue
 		}
+
 		// add context for OpenAI
 		update += "NOTE--this update is part of a developing story, " + result.WebTitle
 
+		// check if duplicate
+		if breaking.UpdateIsDuplicate(update) {
+			log.Printf("Duplicate, skipping (%v)", item.Id)
+			continue
+		}
 		// generate a headline (liveblog updates typically do not have one)
 		headline, err := openai.HeadlineForText(update)
 		if err != nil {

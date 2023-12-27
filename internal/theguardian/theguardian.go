@@ -16,15 +16,16 @@ import (
 )
 
 const (
-	contentUrl         = "https://content.guardianapis.com/search"
-	tagsUrl            = "https://content.guardianapis.com/tags"
-	singleItemUrl      = "https://content.guardianapis.com/"
-	OrderByNewest      = "newest"
-	OrderByOldest      = "oldest"
-	OrderByRelevance   = "relevance"
-	ShowFieldsBody     = "body"
-	ShowFieldsByline   = "byline"
-	ShowFieldsHeadline = "headline"
+	contentUrl                       = "https://content.guardianapis.com/search"
+	tagsUrl                          = "https://content.guardianapis.com/tags"
+	singleItemUrl                    = "https://content.guardianapis.com/"
+	OrderByNewest                    = "newest"
+	OrderByOldest                    = "oldest"
+	OrderByRelevance                 = "relevance"
+	ShowFieldsBody                   = "body"
+	ShowFieldsByline                 = "byline"
+	ShowFieldsHeadline               = "headline"
+	waitAfterCall      time.Duration = 1 * time.Second
 )
 
 type GuardianApiStats struct {
@@ -49,7 +50,7 @@ func (s *GuardianApiStats) PauseTimeElapsed() bool {
 }
 
 var Stats = GuardianApiStats{
-	PauseBetweenCalls: 60 * time.Minute,
+	PauseBetweenCalls: 15 * time.Minute,
 }
 
 var db *gorm.DB
@@ -162,6 +163,7 @@ func GetContent(query Query) (Content, error) {
 	log.Printf("Retrieving content from %s\n", url)
 	Stats.LogCall()
 	resp, err := http.Get(url)
+	time.Sleep(waitAfterCall)
 	if err != nil {
 		return Content{}, err
 	}
@@ -201,6 +203,7 @@ func GetSingleItem(query Query) (Result, error) {
 	//log.Println("Getting url: ",url)
 	Stats.LogCall()
 	resp, err := http.Get(url)
+	time.Sleep(waitAfterCall)
 	if err != nil {
 		return Result{}, err
 	}

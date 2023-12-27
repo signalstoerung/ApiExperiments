@@ -6,6 +6,7 @@ import (
 	"main/internal/theguardian"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
@@ -14,6 +15,9 @@ func main() {
 	if theguardian.Stats.ApiKey == "" {
 		log.Panic("Guardian API key missing")
 	}
+	// set poll interval to 20 minutes
+	theguardian.Stats.PauseBetweenCalls = 20 * time.Minute
+
 	if openai.Stats.ApiKey = os.Getenv("OPENAI_API"); openai.Stats.ApiKey == "" {
 		log.Panic("OpenAI API key missing")
 	}

@@ -1,0 +1,75 @@
+@font-face {
+    font-family: 'archiasemibold';
+    src: url('/fonts/archia-semibold-webfont.eot');
+    src: url('/fonts/archia-semibold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('/fonts/archia-semibold-webfont.woff2') format('woff2'),
+         url('/fonts/archia-semibold-webfont.woff') format('woff'),
+         url('/fonts/archia-semibold-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'archialight';
+    src: url('/fonts/archia-light-webfont.eot');
+    src: url('/fonts/archia-light-webfont.eot?#iefix') format('embedded-opentype'),
+         url('/fonts/archia-light-webfont.woff2') format('woff2'),
+         url('/fonts/archia-light-webfont.woff') format('woff'),
+         url('/fonts/archia-light-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+
+:root {
+    --primary-color: #ff4500;
+    --background-color: #01253e;
+}
+
+body {
+    font-family: 'archialight', Helevetica, Arial, sans-serif;
+    color: var(--primary-color);
+    background-color: var(--background-color);
+}
+
+header {
+    text-align: center;
+    font-family: 'archiasemibold';
+}
+
+section {
+    display: flex;
+}
+
+article {
+    width: 30%;
+    /* min-height: 50vh; */
+    padding: 1em;
+    border: 1px solid;
+}
+
+.icon {
+    max-height: 50px;
+}
+
+aside {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    padding: 1em;
+    border: 1px solid;
+}
+
+aside a {
+    color:var(--background-color);
+    text-decoration: none;
+}
+
+aside a:visited {
+    color: var(--background-color);
+}
+
+aside a:hover {
+    text-decoration: underline;
+}

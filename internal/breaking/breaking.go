@@ -20,10 +20,10 @@ type DevelopingStory struct {
 // An update to a developing story
 type Update struct {
 	gorm.Model
-	Headline string
-	Body     string
-	Url      string
-  DevelopingStoryID uint
+	Headline          string
+	Body              string
+	Url               string
+	DevelopingStoryID uint
 }
 
 var db *gorm.DB
@@ -34,9 +34,9 @@ func init() {
 	if err != nil {
 		log.Panic("failed to connect database")
 	}
-  db.AutoMigrate(&DevelopingStory{})
-  db.AutoMigrate(&Update{})
-  
+	db.AutoMigrate(&DevelopingStory{})
+	db.AutoMigrate(&Update{})
+
 }
 
 func CreateStory(slug string) (*DevelopingStory, error) {
@@ -45,58 +45,58 @@ func CreateStory(slug string) (*DevelopingStory, error) {
 		Updates:     make([]Update, 0, 10),
 		LastUpdated: time.Time{},
 	}
-  result := db.Create(&story)
-  if result.Error != nil {
-    return nil, result.Error
-  }
+	result := db.Create(&story)
+	if result.Error != nil {
+		return nil, result.Error
+	}
 	return &story, nil
 }
 
 func StoryExists(slug string) (*DevelopingStory, error) {
-  story := &DevelopingStory{}
-  result := db.Where(&DevelopingStory{Slug:slug}).First(story)
-  if result.RowsAffected < 1 || result.Error != nil {
-    return nil, result.Error
-  }
-  return story, nil
+	story := &DevelopingStory{}
+	result := db.Where(&DevelopingStory{Slug: slug}).First(story)
+	if result.RowsAffected < 1 || result.Error != nil {
+		return nil, result.Error
+	}
+	return story, nil
 }
 
 func (story *DevelopingStory) AddUpdate(headline string, body string, url string) error {
-  update := Update{
-    Headline: headline,
-    Body: body,
-    Url: url,
-    DevelopingStoryID: story.ID,
-  }
-  result := db.Create(&update)
-  if result.Error != nil {
-    log.Printf("Error creating update: %v",result.Error)
-    return result.Error
-  }
-  story.Updates = append(story.Updates, update)
-  story.LastUpdated = time.Now()
-  result = db.Save(story)
-  if result.Error != nil {
-    log.Printf("Error updating story: %v", result.Error)
-    return result.Error
-  }
-  return nil
+	update := Update{
+		Headline:          headline,
+		Body:              body,
+		Url:               url,
+		DevelopingStoryID: story.ID,
+	}
+	result := db.Create(&update)
+	if result.Error != nil {
+		log.Printf("Error creating update: %v", result.Error)
+		return result.Error
+	}
+	story.Updates = append(story.Updates, update)
+	story.LastUpdated = time.Now()
+	result = db.Save(story)
+	if result.Error != nil {
+		log.Printf("Error updating story: %v", result.Error)
+		return result.Error
+	}
+	return nil
 }
 
 func AllStories() ([]DevelopingStory, error) {
-  var stories []DevelopingStory
-  result := db.Preload("Updates").Find(&stories)
-  if result.Error != nil {
-    return nil, result.Error
-  }
-  return stories, nil
+	var stories []DevelopingStory
+	result := db.Preload("Updates").Find(&stories)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return stories, nil
 }
 
 func StoriesSince(startTime time.Time) ([]DevelopingStory, error) {
-  var stories []DevelopingStory
-  result := db.Where("last_updated > ?",startTime).Preload("Updates", "created_at > ?", startTime).Find(&stories)
-  if result.Error != nil {
-    return nil, result.Error
-  }
-  return stories, nil
+	var stories []DevelopingStory
+	result := db.Where("last_updated > ?", startTime).Preload("Updates", "created_at > ?", startTime).Find(&stories)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return stories, nil
 }

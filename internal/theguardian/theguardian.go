@@ -49,7 +49,7 @@ func (s *GuardianApiStats) PauseTimeElapsed() bool {
 }
 
 var Stats = GuardianApiStats{
-	PauseBetweenCalls: 15 * time.Minute,
+	PauseBetweenCalls: 60 * time.Minute,
 }
 
 var db *gorm.DB

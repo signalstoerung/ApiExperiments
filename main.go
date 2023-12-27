@@ -92,11 +92,11 @@ func retrieve() {
 func printStories(stories []breaking.DevelopingStory) {
   for _, story := range stories {
     fmt.Printf("Slug: %s ", story.Slug)
-    fmt.Printf("(last updated %s\n", story.LastUpdated.Format("15:04"))
+    fmt.Printf("(last updated %s)\n", story.LastUpdated.Format("15:04"))
     fmt.Println("-----------------------------------------------------")
     for _, update := range story.Updates {
       fmt.Println(update.Headline)
-      fmt.Println(update.Body)
+      //fmt.Println(update.Body)
       fmt.Println(update.Url)
       fmt.Printf("Created: %s\n", update.CreatedAt.Format("15:04"))
       fmt.Println("+++")

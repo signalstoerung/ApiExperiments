@@ -35,11 +35,23 @@ body {
 }
 
 header {
-    text-align: center;
+    display:flex;
     font-family: 'archiasemibold';
+    border-bottom: 2px solid var(--primary-color);
+    margin-bottom: 2em;
 }
 
-section {
+.logo {
+    height:50px;
+}
+
+.subtitle {
+    padding-left:2em;
+    font-family: 'archialight', Helevetica, Arial, sans-serif;
+    font-size:medium;
+}
+
+#breaking {
     display: flex;
     min-height: 40vh;
     flex-wrap: wrap;
@@ -48,7 +60,7 @@ section {
     padding-right:45px;
 }
 
-article {
+#breaking article {
     width: 300px;
     padding: 1em;
     border: 1px solid;
@@ -56,7 +68,11 @@ article {
     flex-direction: column;
 }
 
-article h2 {
+#breaking .newUpdate {
+    border: 1px dotted;
+}
+
+#breaking article h2 {
     flex-grow: 2;
 }
 
@@ -90,4 +106,38 @@ a {
 
 a:visited {
     color: var(--primary-color);
+}
+
+button {
+    color: var(--background-color);
+    background-color: var(--primary-color);
+    border-radius: 2px;
+    font-size: medium;
+    font-family: 'archialight', Helvetica, sans-serif;
+}
+
+button:disabled {
+    background-color: gray;
+}
+
+#controls {
+    margin-top: 2em;
+    padding-left:45px;
+    padding-right:45px;
+}
+
+footer section {
+    border-top: solid 2px;
+    margin-top:5em;
+    padding-top:1em;
+    padding-left:45px;
+    padding-right:45px;
+    display: flex;
+}
+
+footer article {
+    padding-left:1em;
+    padding-right:1em;
+    flex-grow: 1;
+    text-align: center;
 }

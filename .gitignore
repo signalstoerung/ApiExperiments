@@ -2,3 +2,4 @@ updates.db
 run.sh
 apistats.db
 web/.DS_Store
+web/images/.DS_Store

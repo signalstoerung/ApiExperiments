@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>BREAKING NEWS</title>
-        <link rel="stylesheet" href="/styles.css">
+        <title>BREAKING:</title>
+        <link rel="stylesheet" href="/css/styles.css">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <script type="module" src="/script.js"></script>
+        <script type="module" src="/js/breaking.js"></script>
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -15,19 +15,34 @@
     </head>
     <body>
         <header>
-            <h1>BREAKING NEWS</h1>
-            <p>For starters, powered by the live blogs of <a href="https://www.theguardian.com/europe">The Guardian</a>. More soon?</p>
+            <figure><img src="/icons/breaking.png" class="logo"></figure>
+            <div>
+                <h1>BREAKING:<span class="subtitle">&nbsp;</span></h1>
+            </div>
         </header>
         <main>
             <section id="breaking">
+                <div><progress max="100"></progress></div>
                 <template id="articleTemplate">
                 <article>
                     <div><img src="/icons/poweredbyguardianWHITE.png" class="icon"></div>
                     <h2 id="headline">Headline...</h2>
+                    <p id="text"></p>
                     <aside id="link"></aside>
                 </article>
                 </template>
             </section>
+            <section id="controls">
+                <button id="refresh">Refresh</button>
+                <button id="notify">Notify me</button>
+                <div id="message">...</div>
+            </section>
         </main>
+        <footer>
+            <section>
+                <article>BREAKING: is a personal project, geared towards my news consumption habits. Your mileage may vary.</article>
+                <article>Contact: hello AT unxpctd DOT xyz</article>
+            </section>
+        </footer>
     </body>
 </html>
